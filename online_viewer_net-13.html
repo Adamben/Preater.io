@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preator.io - 8-Bit Edition</title>
+  <!-- Include Gun.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border: 1px solid #333;
+      image-rendering: pixelated;
+    }
+    .info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-family: 'Press Start 2P', cursive;
+      color: #fff;
+      z-index: 10;
+    }
+    /* Home Menu overlay */
+    #homeMenu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      flex-direction: column;
+      color: #fff;
+      font-family: 'Press Start 2P', cursive;
+      text-align: center;
+    }
+    #homeMenu input {
+      padding: 5px;
+      font-size: 14px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    #homeMenu button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      background: #000;
+      color: #fff;
+      border: 2px solid #fff;
+    }
+    /* Leaderboard styling (top 5 players) */
+    #leaderboard {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Press Start 2P', cursive;
+      color: #fff;
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border: 2px solid #fff;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    /* Chat styling */
+    #chatContainer {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 300px;
+      max-height: 200px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      font-family: 'Press Start 2P', cursive;
+      color: #fff;
+      overflow-y: auto;
+      z-index: 30;
+    }
+    #chatInput {
+      width: calc(100% - 20px);
+      padding: 5px;
+      font-size: 14px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    /* Emote styling */
+    #emoteContainer {
+      position: absolute;
+      bottom: 60px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 5px;
+      z-index: 30;
+    }
+    #emoteContainer button {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    /* Minimap styling */
+    .minimap {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 200px;
+      height: 200px;
+      border: 2px solid #333;
+      background-color: #222;
+    }
+    .minimap canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Home Menu -->
+  <div id="homeMenu">
+    <h1>Preator.io</h1>
+    <h2>8-bit Edition</h2>
+    <input type="text" id="playerNameInput" placeholder="Enter your name" />
+    <p>Use ARROW keys to move. Dash with Shift.</p>
+    <p>Collect food to grow and consume enemies.</p>
+    <p>Chat with others online while playing against bots!</p>
+    <button id="startButton">Start Game</button>
+  </div>
+
+  <div class="info">
+    <p><strong>Preator.io</strong></p>
+    <p>8-bit Edition</p>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+  <div class="minimap">
+    <canvas id="minimapCanvas"></canvas>
+  </div>
+  
+  <!-- Leaderboard (top 5 players) -->
+  <div id="leaderboard"></div>
+  
+  <!-- Chat container -->
+  <div id="chatContainer">
+    <div id="chatLog"></div>
+    <input type="text" id="chatInput" placeholder="Type a message and press Enter" />
+  </div>
+  
+  <!-- Emote container -->
+  <div id="emoteContainer">
+    <button class="emoteBtn">😀</button>
+    <button class="emoteBtn">😢</button>
+    <button class="emoteBtn">😎</button>
+    <button class="emoteBtn">😮</button>
+    <button class="emoteBtn">❤️</button>
+  </div>
+  
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+
+      /* ----------------- Sprite/Texture Generation ----------------- */
+      function createBackgroundSprite() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 32;
+        offCanvas.height = 32;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.fillStyle = '#00aa00';
+        offCtx.fillRect(0, 0, 32, 32);
+        offCtx.fillStyle = '#885522';
+        offCtx.fillRect(4, 4, 4, 4);
+        offCtx.fillRect(20, 10, 4, 4);
+        offCtx.fillRect(10, 20, 4, 4);
+        return offCanvas.toDataURL();
+      }
+      function createEnemySprite() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 32;
+        offCanvas.height = 32;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.fillStyle = '#ff0000';
+        offCtx.fillRect(4, 8, 24, 24);
+        offCtx.fillStyle = '#ff6666';
+        offCtx.beginPath();
+        offCtx.moveTo(4, 8);
+        offCtx.lineTo(8, 4);
+        offCtx.lineTo(32, 4);
+        offCtx.lineTo(28, 8);
+        offCtx.closePath();
+        offCtx.fill();
+        offCtx.fillStyle = '#990000';
+        offCtx.beginPath();
+        offCtx.moveTo(28, 8);
+        offCtx.lineTo(32, 4);
+        offCtx.lineTo(32, 28);
+        offCtx.lineTo(28, 32);
+        offCtx.closePath();
+        offCtx.fill();
+        offCtx.fillStyle = '#000000';
+        offCtx.fillRect(10, 16, 4, 4);
+        offCtx.fillRect(18, 16, 4, 4);
+        offCtx.fillRect(10, 24, 12, 2);
+        return offCanvas.toDataURL();
+      }
+      function createPlayerSprite() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 32;
+        offCanvas.height = 32;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.fillStyle = '#0000ff';
+        offCtx.fillRect(4, 8, 24, 24);
+        offCtx.fillStyle = '#6666ff';
+        offCtx.beginPath();
+        offCtx.moveTo(4, 8);
+        offCtx.lineTo(8, 4);
+        offCtx.lineTo(32, 4);
+        offCtx.lineTo(28, 8);
+        offCtx.closePath();
+        offCtx.fill();
+        offCtx.fillStyle = '#000099';
+        offCtx.beginPath();
+        offCtx.moveTo(28, 8);
+        offCtx.lineTo(32, 4);
+        offCtx.lineTo(32, 28);
+        offCtx.lineTo(28, 32);
+        offCtx.closePath();
+        offCtx.fill();
+        offCtx.fillStyle = '#ffffff';
+        offCtx.fillRect(10, 16, 4, 4);
+        offCtx.fillRect(18, 16, 4, 4);
+        offCtx.fillRect(10, 24, 12, 2);
+        return offCanvas.toDataURL();
+      }
+      function createFoodSprite() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 32;
+        offCanvas.height = 32;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.fillStyle = '#d2a679';
+        offCtx.fillRect(0, 0, 32, 32);
+        offCtx.fillStyle = '#654321';
+        offCtx.fillRect(8, 8, 4, 4);
+        offCtx.fillRect(20, 8, 4, 4);
+        offCtx.fillRect(14, 18, 4, 4);
+        offCtx.fillRect(8, 20, 4, 4);
+        return offCanvas.toDataURL();
+      }
+      
+      const backgroundImage = new Image();
+      backgroundImage.src = createBackgroundSprite();
+      const enemySprite = new Image();
+      enemySprite.src = createEnemySprite();
+      const playerSprite = new Image();
+      playerSprite.src = createPlayerSprite();
+      const foodSprite = new Image();
+      foodSprite.src = createFoodSprite();
+      
+      /* -------------------------- Game Setup -------------------------- */
+      const canvas = document.getElementById('gameCanvas');
+      const minimapCanvas = document.getElementById('minimapCanvas');
+      const ctx = canvas.getContext('2d');
+      const minimapCtx = minimapCanvas.getContext('2d');
+      canvas.width = 800;
+      canvas.height = 600;
+      minimapCanvas.width = 200;
+      minimapCanvas.height = 200;
+      
+      let gameState = "menu"; // "menu", "playing", or "spectator"
+      let gameLoopId = null;
+      let spectatorTarget = null;
+      
+      // Local player object
+      let player = {
+        x: 3000 / 2,
+        y: 3000 / 2,
+        radius: 16,
+        color: 'blue',
+        speed: 3,
+        dashSpeed: 10,
+        dashDuration: 750,
+        dashCooldown: 15000,
+        isDashing: false,
+        dashStart: 0,
+        reloadTimeStart: 0,
+        currentEmote: null,
+        emoteTimestamp: 0,
+        alive: true
+      };
+      
+      let foods = [];
+      const foodCount = 50;
+      let enemies = [];
+      const enemyCount = 20;
+      const enemyNames = ["Gorg", "Zar", "Blip", "Fang", "Snarl", "Murk", "Snik"];
+      let score = 0;
+      let playerName = "Player";
+      
+      function generateFood() {
+        for (let i = 0; i < foodCount; i++) {
+          foods.push({
+            x: Math.random() * 3000,
+            y: Math.random() * 3000,
+            radius: 8,
+            color: 'green',
+            eaten: false
+          });
+        }
+      }
+      function generateEnemies() {
+        for (let i = 0; i < enemyCount; i++) {
+          enemies.push({
+            x: Math.random() * 3000,
+            y: Math.random() * 3000,
+            radius: 16,
+            color: 'red',
+            speed: 2,
+            direction: Math.random() * 2 * Math.PI,
+            detectionRadius: 155,
+            wanderStart: Date.now(),
+            name: enemyNames[Math.floor(Math.random() * enemyNames.length)]
+          });
+        }
+      }
+      generateFood();
+      generateEnemies();
+      
+      let camera = { x: 0, y: 0, zoom: 1 };
+      
+      /* ------------------ Input Handling ------------------ */
+      let keys = {};
+      window.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+        // In spectator mode, pressing "M" returns to the menu.
+        if (gameState === "spectator" && e.key.toLowerCase() === 'm') {
+          cancelAnimationFrame(gameLoopId);
+          gameLoopId = null;
+          gameState = "menu";
+          document.getElementById('homeMenu').style.display = 'flex';
+          keys = {};
+        }
+      });
+      window.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+      });
+      
+      function handleDash() {
+        const now = Date.now();
+        if (keys['Shift'] && !player.isDashing && now - player.reloadTimeStart >= player.dashCooldown) {
+          player.isDashing = true;
+          player.dashStart = now;
+          player.reloadTimeStart = now;
+          setTimeout(() => { player.isDashing = false; }, player.dashDuration);
+        }
+      }
+      function movePlayer() {
+        const speed = player.isDashing ? player.dashSpeed : player.speed;
+        if (keys['ArrowUp']) player.y -= speed;
+        if (keys['ArrowDown']) player.y += speed;
+        if (keys['ArrowLeft']) player.x -= speed;
+        if (keys['ArrowRight']) player.x += speed;
+        player.x = Math.max(player.radius, Math.min(3000 - player.radius, player.x));
+        player.y = Math.max(player.radius, Math.min(3000 - player.radius, player.y));
+      }
+      function detectPlayerCollisions() {
+        // Collisions with food
+        for (let i = 0; i < foods.length; i++) {
+          const food = foods[i];
+          const dx = player.x - food.x;
+          const dy = player.y - food.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance < player.radius + food.radius) {
+            player.radius += 1;
+            score += 10;
+            foods.splice(i, 1);
+            i--;
+            setTimeout(() => {
+              foods.push({
+                x: Math.random() * 3000,
+                y: Math.random() * 3000,
+                radius: 8,
+                color: 'green',
+                eaten: false
+              });
+            }, 5000);
+          }
+        }
+        // Collisions with enemies
+        for (let i = 0; i < enemies.length; i++) {
+          const enemy = enemies[i];
+          const dx = player.x - enemy.x;
+          const dy = player.y - enemy.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance < player.radius + enemy.radius) {
+            if (enemy.radius > player.radius) {
+              // Player dies
+              player.alive = false;
+              spectatorTarget = enemy;
+              gameState = "spectator";
+              updateLocalPlayerInGun();
+              return;
+            } else {
+              player.radius += 1;
+              score += 50;
+              enemies.splice(i, 1);
+              i--;
+              setTimeout(() => {
+                enemies.push({
+                  x: Math.random() * 3000,
+                  y: Math.random() * 3000,
+                  radius: 16,
+                  color: 'red',
+                  speed: 2,
+                  direction: Math.random() * 2 * Math.PI,
+                  detectionRadius: 155,
+                  wanderStart: Date.now(),
+                  name: enemyNames[Math.floor(Math.random() * enemyNames.length)]
+                });
+              }, 5000);
+            }
+          }
+        }
+      }
+      
+      // Enemies eat food and each other.
+      function simulateEnemyConsumption() {
+        for (let i = 0; i < enemies.length; i++) {
+          const enemy = enemies[i];
+          for (let j = 0; j < foods.length; j++) {
+            const food = foods[j];
+            const dx = enemy.x - food.x;
+            const dy = enemy.y - food.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < enemy.radius + food.radius) {
+              enemy.radius += 1;
+              foods.splice(j, 1);
+              j--;
+              setTimeout(() => {
+                foods.push({
+                  x: Math.random() * 3000,
+                  y: Math.random() * 3000,
+                  radius: 8,
+                  color: 'green',
+                  eaten: false
+                });
+              }, 5000);
+            }
+          }
+          for (let j = 0; j < enemies.length; j++) {
+            if (i === j) continue;
+            const other = enemies[j];
+            const dx = enemy.x - other.x;
+            const dy = enemy.y - other.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < enemy.radius + other.radius && enemy.radius > other.radius) {
+              enemy.radius += 2;
+              enemies.splice(j, 1);
+              j--;
+              setTimeout(() => {
+                enemies.push({
+                  x: Math.random() * 3000,
+                  y: Math.random() * 3000,
+                  radius: 16,
+                  color: 'red',
+                  speed: 2,
+                  direction: Math.random() * 2 * Math.PI,
+                  detectionRadius: 155,
+                  wanderStart: Date.now(),
+                  name: enemyNames[Math.floor(Math.random() * enemyNames.length)]
+                });
+              }, 5000);
+            }
+          }
+        }
+      }
+      function moveEnemies() {
+        for (let enemy of enemies) {
+          if (Date.now() - enemy.wanderStart > 5000) {
+            enemy.direction = Math.random() * 2 * Math.PI;
+            enemy.wanderStart = Date.now();
+          }
+          let closestFood = null;
+          let closestEnemy = null;
+          let closestFoodDist = Infinity;
+          let closestEnemyDist = Infinity;
+          for (let food of foods) {
+            const dist = Math.hypot(enemy.x - food.x, enemy.y - food.y);
+            if (dist < closestFoodDist) {
+              closestFoodDist = dist;
+              closestFood = food;
+            }
+          }
+          for (let other of enemies) {
+            if (other === enemy) continue;
+            const dist = Math.hypot(enemy.x - other.x, enemy.y - other.y);
+            if (other.radius < enemy.radius && dist < closestEnemyDist) {
+              closestEnemyDist = dist;
+              closestEnemy = other;
+            }
+          }
+          const playerDist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+          if (player.alive && player.radius > enemy.radius &&
+              playerDist < enemy.detectionRadius &&
+              playerDist < closestFoodDist &&
+              playerDist < closestEnemyDist &&
+              Math.random() < 0.5) {
+            const angle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
+            enemy.x += Math.cos(angle) * enemy.speed;
+            enemy.y += Math.sin(angle) * enemy.speed;
+          } else if (player.alive && playerDist < enemy.detectionRadius && enemy.radius > player.radius) {
+            const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+            enemy.x += Math.cos(angle) * enemy.speed;
+            enemy.y += Math.sin(angle) * enemy.speed;
+          } else if (closestFood && closestFoodDist < closestEnemyDist) {
+            const angle = Math.atan2(closestFood.y - enemy.y, closestFood.x - enemy.x);
+            enemy.x += Math.cos(angle) * enemy.speed;
+            enemy.y += Math.sin(angle) * enemy.speed;
+          } else if (closestEnemy) {
+            const angle = Math.atan2(closestEnemy.y - enemy.y, closestEnemy.x - enemy.x);
+            enemy.x += Math.cos(angle) * enemy.speed;
+            enemy.y += Math.sin(angle) * enemy.speed;
+          } else {
+            enemy.x += Math.cos(enemy.direction) * enemy.speed;
+            enemy.y += Math.sin(enemy.direction) * enemy.speed;
+          }
+        }
+      }
+      function updateCamera() {
+        if (gameState === "playing" && player.alive) {
+          camera.x = player.x - canvas.width / 2;
+          camera.y = player.y - canvas.height / 2;
+        } else if (gameState === "spectator" && spectatorTarget) {
+          camera.x = spectatorTarget.x - canvas.width / 2;
+          camera.y = spectatorTarget.y - canvas.height / 2;
+        } else {
+          camera.x = 0;
+          camera.y = 0;
+        }
+        camera.x = Math.max(0, Math.min(3000 - canvas.width, camera.x));
+        camera.y = Math.max(0, Math.min(3000 - canvas.height, camera.y));
+      }
+      
+      /* ------------------ Gun.js Integration ------------------ */
+      const gun = Gun();
+      const playersRef = gun.get('players');
+      const chatRef = gun.get('chat');
+      const globalStateRef = gun.get('globalState');
+      
+      let isHost = false;
+      // Determine host: if no host is set in globalState, become host.
+      globalStateRef.get('host').once(data => {
+        if (!data) {
+          globalStateRef.get('host').put(playerName);
+          isHost = true;
+        } else {
+          isHost = (data === playerName);
+        }
+      });
+      
+      // Container for remote players.
+      let remotePlayers = {};
+      playersRef.map().on((data, key) => {
+        if (data && key !== playerName) {
+          remotePlayers[key] = data;
+          updateLeaderboardUI();
+        }
+      });
+      
+      function updateLocalPlayerInGun() {
+        playersRef.get(playerName).put({
+          name: playerName,
+          x: player.x,
+          y: player.y,
+          radius: player.radius,
+          score: score,
+          alive: player.alive,
+          updated: Date.now()
+        });
+      }
+      
+      if (!isHost) {
+        globalStateRef.on(data => {
+          if (data && data.foods && data.enemies) {
+            foods = data.foods;
+            enemies = data.enemies;
+          }
+        });
+      }
+      
+      // Chat functionality.
+      chatRef.map().on((data, key) => {
+        if (data) {
+          addChatMessage(data.name, data.message);
+        }
+      });
+      
+      function sendChatMessage(msg) {
+        chatRef.set({
+          name: playerName,
+          message: msg,
+          timestamp: Date.now()
+        });
+      }
+      
+      function addChatMessage(name, message) {
+        const chatLog = document.getElementById('chatLog');
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = name + ": " + message;
+        chatLog.appendChild(messageDiv);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+      
+      function updateGlobalState() {
+        if (isHost) {
+          globalStateRef.put({ foods: foods, enemies: enemies });
+        }
+      }
+      
+      function updateLeaderboardUI() {
+        let leaderboardArray = [];
+        leaderboardArray.push({ name: playerName, score: score });
+        for (let key in remotePlayers) {
+          leaderboardArray.push(remotePlayers[key]);
+        }
+        leaderboardArray.sort((a, b) => (b.score || 0) - (a.score || 0));
+        let html = "<h3>Top 5 Players</h3>";
+        for (let i = 0; i < Math.min(5, leaderboardArray.length); i++) {
+          const entry = leaderboardArray[i];
+          html += `<div>${entry.name}: ${entry.score}</div>`;
+        }
+        document.getElementById('leaderboard').innerHTML = html;
+      }
+      
+      function drawEmote(x, y, emote, radius) {
+        ctx.font = "24px 'Press Start 2P'";
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(emote, x, y - radius - 20);
+      }
+      function drawGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (backgroundImage.complete) {
+          const pattern = ctx.createPattern(backgroundImage, 'repeat');
+          if (pattern.setTransform) {
+            pattern.setTransform(new DOMMatrix().translate(-camera.x, -camera.y));
+          }
+          ctx.fillStyle = pattern;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        updateCamera();
+        // Draw remote players.
+        for (let key in remotePlayers) {
+          const rp = remotePlayers[key];
+          if (!rp.alive) continue;
+          if (playerSprite.complete) {
+            ctx.drawImage(playerSprite, rp.x - camera.x - rp.radius, rp.y - camera.y - rp.radius, rp.radius * 2, rp.radius * 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(rp.x - camera.x, rp.y - camera.y, rp.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "blue";
+            ctx.fill();
+            ctx.closePath();
+          }
+          ctx.font = "16px 'Press Start 2P'";
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "center";
+          ctx.fillText(rp.name, rp.x - camera.x, rp.y - camera.y - rp.radius - 10);
+          if (rp.currentEmote && Date.now() - rp.emoteTimestamp < 3000) {
+            drawEmote(rp.x - camera.x, rp.y - camera.y, rp.currentEmote, rp.radius);
+          }
+        }
+        // Draw local player.
+        if (gameState === "playing" && player.alive) {
+          if (playerSprite.complete) {
+            ctx.drawImage(playerSprite, player.x - camera.x - player.radius, player.y - camera.y - player.radius, player.radius * 2, player.radius * 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(player.x - camera.x, player.y - camera.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.fill();
+            ctx.closePath();
+          }
+          ctx.font = "16px 'Press Start 2P'";
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "center";
+          ctx.fillText(playerName, player.x - camera.x, player.y - camera.y - player.radius - 10);
+          if (player.currentEmote && Date.now() - player.emoteTimestamp < 3000) {
+            drawEmote(player.x - camera.x, player.y - camera.y, player.currentEmote, player.radius);
+          }
+        } else if (gameState === "spectator") {
+          ctx.font = "24px 'Press Start 2P'";
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "center";
+          ctx.fillText("Spectating", canvas.width / 2, 50);
+          ctx.fillText("Press M to return to menu", canvas.width / 2, 80);
+        }
+        // Draw food.
+        for (let food of foods) {
+          if (!food.eaten) {
+            if (foodSprite.complete) {
+              ctx.drawImage(foodSprite, food.x - camera.x - food.radius, food.y - camera.y - food.radius, food.radius * 2, food.radius * 2);
+            } else {
+              ctx.beginPath();
+              ctx.arc(food.x - camera.x, food.y - camera.y, food.radius, 0, Math.PI * 2);
+              ctx.fillStyle = food.color;
+              ctx.fill();
+              ctx.closePath();
+            }
+          }
+        }
+        // Draw enemies.
+        for (let enemy of enemies) {
+          if (enemySprite.complete) {
+            ctx.drawImage(enemySprite, enemy.x - camera.x - enemy.radius, enemy.y - camera.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(enemy.x - camera.x, enemy.y - camera.y, enemy.radius, 0, Math.PI * 2);
+            ctx.fillStyle = enemy.color;
+            ctx.fill();
+            ctx.closePath();
+          }
+          ctx.font = "16px 'Press Start 2P'";
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "center";
+          ctx.fillText(enemy.name, enemy.x - camera.x, enemy.y - camera.y - enemy.radius - 10);
+        }
+        drawMinimap();
+        updateLeaderboardUI();
+      }
+      function drawMinimap() {
+        minimapCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+        minimapCtx.fillStyle = '#333';
+        minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+        const scaleX = minimapCanvas.width / 3000;
+        const scaleY = minimapCanvas.height / 3000;
+        minimapCtx.beginPath();
+        minimapCtx.arc(player.x * scaleX, player.y * scaleY, player.radius * scaleX, 0, Math.PI * 2);
+        minimapCtx.fillStyle = player.color;
+        minimapCtx.fill();
+        minimapCtx.closePath();
+        for (let food of foods) {
+          if (!food.eaten) {
+            minimapCtx.beginPath();
+            minimapCtx.arc(food.x * scaleX, food.y * scaleY, food.radius * scaleX, 0, Math.PI * 2);
+            minimapCtx.fillStyle = food.color;
+            minimapCtx.fill();
+            minimapCtx.closePath();
+          }
+        }
+        for (let enemy of enemies) {
+          minimapCtx.beginPath();
+          minimapCtx.arc(enemy.x * scaleX, enemy.y * scaleY, enemy.radius * scaleX, 0, Math.PI * 2);
+          minimapCtx.fillStyle = enemy.color;
+          minimapCtx.fill();
+          minimapCtx.closePath();
+        }
+      }
+      
+      function gameLoop() {
+        if (gameState === "playing" && player.alive) {
+          handleDash();
+          movePlayer();
+          detectPlayerCollisions();
+          updateLocalPlayerInGun();
+        }
+        if (isHost) {
+          simulateEnemyConsumption();
+          moveEnemies();
+          updateGlobalState();
+        }
+        drawGame();
+        gameLoopId = requestAnimationFrame(gameLoop);
+      }
+      
+      function resetGame() {
+        player.x = 3000 / 2;
+        player.y = 3000 / 2;
+        player.radius = 16;
+        player.isDashing = false;
+        player.reloadTimeStart = Date.now();
+        player.currentEmote = null;
+        player.emoteTimestamp = 0;
+        player.alive = true;
+        foods = [];
+        enemies = [];
+        keys = {};
+        generateFood();
+        generateEnemies();
+      }
+      
+      // Chat input event.
+      document.getElementById('chatInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const msg = e.target.value;
+          if (msg.trim() !== "") {
+            sendChatMessage(msg);
+          }
+          e.target.value = "";
+        }
+      });
+      
+      // Emote buttons.
+      document.querySelectorAll('.emoteBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          player.currentEmote = btn.textContent;
+          player.emoteTimestamp = Date.now();
+        });
+      });
+      
+      document.getElementById('startButton').addEventListener('click', () => {
+        const nameInput = document.getElementById('playerNameInput').value.trim();
+        if (nameInput !== "") {
+          playerName = nameInput;
+        }
+        document.getElementById('homeMenu').style.display = 'none';
+        resetGame();
+        score = 0;
+        gameState = "playing";
+        spectatorTarget = null;
+        if (!gameLoopId) gameLoop();
+      });
+      
+    }); // End DOMContentLoaded
+  </script>
+</body>
+</html>
