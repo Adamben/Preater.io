@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Preator.io - 8-Bit Edition</title>
-  <!-- Include Gun.js from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <title>Preator.io - 2.5D Edition</title>
+  <!-- Include Socket.io from CDN -->
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
     
@@ -15,17 +15,21 @@
       overflow: hidden;
       background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
       font-family: 'Press Start 2P', cursive;
+      width: 100vw;
+      height: 100vh;
     }
     canvas {
       display: block;
-      margin: 0 auto;
-      border: 3px solid #444;
-      border-radius: 8px;
+      margin: 0;
+      border: none;
       image-rendering: pixelated;
       box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.8),
         inset 0 2px 4px rgba(255, 255, 255, 0.1);
-      transform: perspective(1000px) rotateX(2deg);
+      transform: perspective(1000px) rotateX(1deg);
+      position: absolute;
+      top: 0;
+      left: 0;
     }
     .info {
       position: absolute;
@@ -42,6 +46,22 @@
         0 8px 32px rgba(74, 158, 255, 0.3),
         inset 0 2px 4px rgba(255, 255, 255, 0.1);
       transform: translateZ(10px);
+    }
+    /* Power-up HUD */
+    .powerup-hud {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      font-family: 'Press Start 2P', cursive;
+      color: #fff;
+      z-index: 10;
+      background: linear-gradient(135deg, rgba(40, 0, 40, 0.9), rgba(20, 0, 20, 0.9));
+      padding: 15px;
+      border-radius: 8px;
+      border: 2px solid #ff4aff;
+      box-shadow: 
+        0 8px 32px rgba(255, 74, 255, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
     }
     /* Home Menu overlay */
     #homeMenu {
@@ -244,17 +264,23 @@
   <!-- Home Menu -->
   <div id="homeMenu">
     <h1>Preator.io</h1>
-    <h2>8-bit Edition</h2>
+    <h2>2.5D Edition</h2>
     <input type="text" id="playerNameInput" placeholder="Enter your name" />
     <p>Use ARROW keys to move. Dash with Shift.</p>
     <p>Collect food to grow and consume enemies.</p>
-    <p>Chat with others online while playing against bots!</p>
+    <p>Spacebar to shoot when you have ammo!</p>
+    <p>Chat with others online while playing against smart bots!</p>
     <button id="startButton">Start Game</button>
   </div>
 
   <div class="info">
     <p><strong>Preator.io</strong></p>
-    <p>8-bit Edition</p>
+    <p>2.5D Edition</p>
+  </div>
+
+  <div class="powerup-hud">
+    <p id="ammoCount">Ammo: 0</p>
+    <p id="powerupStatus">No Power-ups</p>
   </div>
 
   <canvas id="gameCanvas"></canvas>
@@ -297,6 +323,7 @@
         offCtx.fillRect(10, 20, 4, 4);
         return offCanvas.toDataURL();
       }
+      
       function createEnemySprite() {
         const offCanvas = document.createElement('canvas');
         offCanvas.width = 40;
@@ -349,6 +376,7 @@
         
         return offCanvas.toDataURL();
       }
+      
       function createPlayerSprite() {
         const offCanvas = document.createElement('canvas');
         offCanvas.width = 40;
@@ -401,6 +429,7 @@
         
         return offCanvas.toDataURL();
       }
+      
       function createFoodSprite() {
         const offCanvas = document.createElement('canvas');
         offCanvas.width = 20;
@@ -438,6 +467,55 @@
         
         return offCanvas.toDataURL();
       }
+
+      function createPowerupSprite() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 24;
+        offCanvas.height = 24;
+        const offCtx = offCanvas.getContext('2d');
+        
+        // Pulsing glow effect
+        const gradient = offCtx.createRadialGradient(12, 12, 4, 12, 12, 12);
+        gradient.addColorStop(0, '#ff00ff');
+        gradient.addColorStop(0.5, '#ff44ff');
+        gradient.addColorStop(1, '#aa00aa');
+        offCtx.fillStyle = gradient;
+        offCtx.beginPath();
+        offCtx.arc(12, 12, 10, 0, Math.PI * 2);
+        offCtx.fill();
+        
+        // Inner core
+        offCtx.fillStyle = '#ffffff';
+        offCtx.beginPath();
+        offCtx.arc(12, 12, 6, 0, Math.PI * 2);
+        offCtx.fill();
+        
+        // Weapon symbol
+        offCtx.fillStyle = '#ff00ff';
+        offCtx.fillRect(10, 8, 4, 8);
+        offCtx.fillRect(8, 10, 8, 4);
+        
+        return offCanvas.toDataURL();
+      }
+
+      function createProjectileSprite() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 12;
+        offCanvas.height = 12;
+        const offCtx = offCanvas.getContext('2d');
+        
+        // Glowing projectile
+        const gradient = offCtx.createRadialGradient(6, 6, 2, 6, 6, 6);
+        gradient.addColorStop(0, '#00ffff');
+        gradient.addColorStop(0.7, '#0088ff');
+        gradient.addColorStop(1, '#0044aa');
+        offCtx.fillStyle = gradient;
+        offCtx.beginPath();
+        offCtx.arc(6, 6, 5, 0, Math.PI * 2);
+        offCtx.fill();
+        
+        return offCanvas.toDataURL();
+      }
       
       const backgroundImage = new Image();
       backgroundImage.src = createBackgroundSprite();
@@ -447,16 +525,27 @@
       playerSprite.src = createPlayerSprite();
       const foodSprite = new Image();
       foodSprite.src = createFoodSprite();
+      const powerupSprite = new Image();
+      powerupSprite.src = createPowerupSprite();
+      const projectileSprite = new Image();
+      projectileSprite.src = createProjectileSprite();
       
       /* -------------------------- Game Setup -------------------------- */
       const canvas = document.getElementById('gameCanvas');
       const minimapCanvas = document.getElementById('minimapCanvas');
       const ctx = canvas.getContext('2d');
       const minimapCtx = minimapCanvas.getContext('2d');
-      canvas.width = 800;
-      canvas.height = 600;
-      minimapCanvas.width = 200;
-      minimapCanvas.height = 200;
+      
+      // Make game fullscreen
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        minimapCanvas.width = 200;
+        minimapCanvas.height = 200;
+      }
+      
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
       
       let gameState = "menu"; // "menu", "playing", or "spectator"
       let gameLoopId = null;
@@ -477,16 +566,56 @@
         reloadTimeStart: 0,
         currentEmote: null,
         emoteTimestamp: 0,
-        alive: true
+        alive: true,
+        ammo: 0,
+        lastDirection: { x: 1, y: 0 }
       };
       
       let foods = [];
       const foodCount = 50;
       let enemies = [];
       const enemyCount = 20;
-      const enemyNames = ["Gorg", "Zar", "Blip", "Fang", "Snarl", "Murk", "Snik"];
+      const enemyNames = ["Gorg", "Zar", "Blip", "Fang", "Snarl", "Murk", "Snik", "Drak", "Vex", "Raze"];
+      let powerups = [];
+      let projectiles = [];
       let score = 0;
       let playerName = "Player";
+      
+      // Socket.io connection (fallback to local gameplay if server unavailable)
+      let socket = null;
+      let remotePlayers = {};
+      
+      try {
+        socket = io();
+        
+        socket.on('connect', () => {
+          console.log('Connected to server');
+        });
+        
+        socket.on('playerUpdate', (data) => {
+          remotePlayers[data.id] = data;
+          updateLeaderboardUI();
+        });
+        
+        socket.on('playerDisconnected', (id) => {
+          delete remotePlayers[id];
+          updateLeaderboardUI();
+        });
+        
+        socket.on('chatMessage', (data) => {
+          addChatMessage(data.name, data.message);
+        });
+        
+        socket.on('gameStateUpdate', (data) => {
+          foods = data.foods || foods;
+          enemies = data.enemies || enemies;
+          powerups = data.powerups || powerups;
+          projectiles = data.projectiles || projectiles;
+        });
+        
+      } catch (error) {
+        console.log('Playing in offline mode');
+      }
       
       function generateFood() {
         for (let i = 0; i < foodCount; i++) {
@@ -499,6 +628,7 @@
           });
         }
       }
+      
       function generateEnemies() {
         for (let i = 0; i < enemyCount; i++) {
           enemies.push({
@@ -506,23 +636,199 @@
             y: Math.random() * 3000,
             radius: 16,
             color: 'red',
-            speed: 2,
+            speed: 2 + Math.random(),
             direction: Math.random() * 2 * Math.PI,
-            detectionRadius: 155,
+            detectionRadius: 155 + Math.random() * 50,
             wanderStart: Date.now(),
-            name: enemyNames[Math.floor(Math.random() * enemyNames.length)]
+            name: enemyNames[Math.floor(Math.random() * enemyNames.length)],
+            aggressionLevel: Math.random(),
+            memory: [],
+            lastPlayerSeen: null,
+            huntMode: false,
+            fleeMode: false,
+            teamUp: null
           });
         }
       }
+      
+      function generatePowerups() {
+        if (powerups.length < 3) {
+          powerups.push({
+            x: Math.random() * 3000,
+            y: Math.random() * 3000,
+            radius: 12,
+            type: 'shooter',
+            collected: false
+          });
+        }
+      }
+      
       generateFood();
       generateEnemies();
+      setInterval(generatePowerups, 15000);
       
       let camera = { x: 0, y: 0, zoom: 1 };
+      
+      /* ------------------ Enhanced Enemy AI ------------------ */
+      function updateEnemyAI() {
+        for (let enemy of enemies) {
+          const now = Date.now();
+          
+          // Enhanced memory system
+          if (enemy.memory.length > 10) enemy.memory.shift();
+          
+          // Detect nearby entities
+          let nearbyEnemies = enemies.filter(e => e !== enemy && 
+            Math.hypot(e.x - enemy.x, e.y - enemy.y) < enemy.detectionRadius);
+          let nearbyFood = foods.filter(f => 
+            Math.hypot(f.x - enemy.x, f.y - enemy.y) < enemy.detectionRadius);
+          let nearbyPowerups = powerups.filter(p => 
+            Math.hypot(p.x - enemy.x, p.y - enemy.y) < enemy.detectionRadius);
+          
+          // Player detection
+          let playerInRange = player.alive && 
+            Math.hypot(player.x - enemy.x, player.y - enemy.y) < enemy.detectionRadius;
+          
+          if (playerInRange) {
+            enemy.lastPlayerSeen = { x: player.x, y: player.y, time: now };
+          }
+          
+          // Determine enemy behavior
+          let shouldFlee = false;
+          let shouldHunt = false;
+          let target = null;
+          
+          // Check if should flee from larger enemies or player
+          if (playerInRange && player.radius > enemy.radius * 1.2) {
+            shouldFlee = true;
+            enemy.fleeMode = true;
+            target = { x: player.x, y: player.y };
+          }
+          
+          for (let other of nearbyEnemies) {
+            if (other.radius > enemy.radius * 1.3) {
+              shouldFlee = true;
+              enemy.fleeMode = true;
+              target = other;
+              break;
+            }
+          }
+          
+          // Hunt smaller enemies or player
+          if (!shouldFlee) {
+            if (playerInRange && enemy.radius > player.radius * 1.1) {
+              shouldHunt = true;
+              enemy.huntMode = true;
+              target = { x: player.x, y: player.y };
+            } else {
+              for (let other of nearbyEnemies) {
+                if (enemy.radius > other.radius * 1.1) {
+                  shouldHunt = true;
+                  enemy.huntMode = true;
+                  target = other;
+                  break;
+                }
+              }
+            }
+          }
+          
+          // Team up behavior for similar sized enemies
+          if (!shouldFlee && !shouldHunt && enemy.aggressionLevel > 0.7) {
+            let teammate = nearbyEnemies.find(e => 
+              Math.abs(e.radius - enemy.radius) < 5 && e.aggressionLevel > 0.6);
+            if (teammate) {
+              enemy.teamUp = teammate;
+            }
+          }
+          
+          // Movement logic
+          let moveX = 0, moveY = 0;
+          
+          if (shouldFlee && target) {
+            // Flee with some randomness
+            let fleeAngle = Math.atan2(enemy.y - target.y, enemy.x - target.x);
+            fleeAngle += (Math.random() - 0.5) * 0.5; // Add some chaos
+            moveX = Math.cos(fleeAngle) * enemy.speed * 1.5;
+            moveY = Math.sin(fleeAngle) * enemy.speed * 1.5;
+            enemy.memory.push({ action: 'flee', target: target, time: now });
+          } else if (shouldHunt && target) {
+            // Hunt with prediction
+            let huntAngle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
+            // Predict target movement
+            if (enemy.memory.length > 2) {
+              let lastPos = enemy.memory[enemy.memory.length - 1];
+              if (lastPos.target) {
+                let predictedX = target.x + (target.x - lastPos.target.x) * 2;
+                let predictedY = target.y + (target.y - lastPos.target.y) * 2;
+                huntAngle = Math.atan2(predictedY - enemy.y, predictedX - enemy.x);
+              }
+            }
+            moveX = Math.cos(huntAngle) * enemy.speed * 1.2;
+            moveY = Math.sin(huntAngle) * enemy.speed * 1.2;
+            enemy.memory.push({ action: 'hunt', target: target, time: now });
+          } else if (nearbyPowerups.length > 0) {
+            // Go for powerups
+            let closestPowerup = nearbyPowerups.reduce((closest, p) => {
+              let dist = Math.hypot(p.x - enemy.x, p.y - enemy.y);
+              return dist < closest.dist ? { powerup: p, dist: dist } : closest;
+            }, { powerup: null, dist: Infinity });
+            
+            if (closestPowerup.powerup) {
+              let angle = Math.atan2(closestPowerup.powerup.y - enemy.y, closestPowerup.powerup.x - enemy.x);
+              moveX = Math.cos(angle) * enemy.speed;
+              moveY = Math.sin(angle) * enemy.speed;
+            }
+          } else if (nearbyFood.length > 0) {
+            // Go for food
+            let closestFood = nearbyFood.reduce((closest, f) => {
+              let dist = Math.hypot(f.x - enemy.x, f.y - enemy.y);
+              return dist < closest.dist ? { food: f, dist: dist } : closest;
+            }, { food: null, dist: Infinity });
+            
+            if (closestFood.food) {
+              let angle = Math.atan2(closestFood.food.y - enemy.y, closestFood.food.x - enemy.x);
+              moveX = Math.cos(angle) * enemy.speed;
+              moveY = Math.sin(angle) * enemy.speed;
+            }
+          } else if (enemy.teamUp) {
+            // Follow teammate
+            let angle = Math.atan2(enemy.teamUp.y - enemy.y, enemy.teamUp.x - enemy.x);
+            moveX = Math.cos(angle) * enemy.speed * 0.8;
+            moveY = Math.sin(angle) * enemy.speed * 0.8;
+          } else {
+            // Wander with some persistence
+            if (now - enemy.wanderStart > 3000 + Math.random() * 4000) {
+              enemy.direction = Math.random() * 2 * Math.PI;
+              enemy.wanderStart = now;
+            }
+            moveX = Math.cos(enemy.direction) * enemy.speed;
+            moveY = Math.sin(enemy.direction) * enemy.speed;
+          }
+          
+          // Apply movement with boundary checking
+          enemy.x = Math.max(enemy.radius, Math.min(3000 - enemy.radius, enemy.x + moveX));
+          enemy.y = Math.max(enemy.radius, Math.min(3000 - enemy.radius, enemy.y + moveY));
+          
+          // Reset modes periodically
+          if (now - enemy.wanderStart > 8000) {
+            enemy.huntMode = false;
+            enemy.fleeMode = false;
+            enemy.teamUp = null;
+          }
+        }
+      }
       
       /* ------------------ Input Handling ------------------ */
       let keys = {};
       window.addEventListener('keydown', (e) => {
         keys[e.key] = true;
+        
+        // Shooting
+        if (e.code === 'Space' && player.ammo > 0 && gameState === "playing") {
+          e.preventDefault();
+          shootProjectile();
+        }
+        
         // In spectator mode, pressing "M" returns to the menu.
         if (gameState === "spectator" && e.key.toLowerCase() === 'm') {
           cancelAnimationFrame(gameLoopId);
@@ -532,9 +838,39 @@
           keys = {};
         }
       });
+      
       window.addEventListener('keyup', (e) => {
         keys[e.key] = false;
       });
+      
+      function shootProjectile() {
+        if (player.ammo <= 0) return;
+        
+        player.ammo--;
+        updatePowerupHUD();
+        
+        let angle = Math.atan2(player.lastDirection.y, player.lastDirection.x);
+        
+        projectiles.push({
+          x: player.x + Math.cos(angle) * player.radius,
+          y: player.y + Math.sin(angle) * player.radius,
+          vx: Math.cos(angle) * 8,
+          vy: Math.sin(angle) * 8,
+          radius: 6,
+          owner: 'player',
+          damage: 10,
+          life: 100
+        });
+        
+        if (socket) {
+          socket.emit('projectileFired', {
+            x: player.x,
+            y: player.y,
+            angle: angle,
+            owner: playerName
+          });
+        }
+      }
       
       function handleDash() {
         const now = Date.now();
@@ -545,15 +881,101 @@
           setTimeout(() => { player.isDashing = false; }, player.dashDuration);
         }
       }
+      
       function movePlayer() {
         const speed = player.isDashing ? player.dashSpeed : player.speed;
-        if (keys['ArrowUp']) player.y -= speed;
-        if (keys['ArrowDown']) player.y += speed;
-        if (keys['ArrowLeft']) player.x -= speed;
-        if (keys['ArrowRight']) player.x += speed;
+        let moved = false;
+        
+        if (keys['ArrowUp']) {
+          player.y -= speed;
+          player.lastDirection = { x: 0, y: -1 };
+          moved = true;
+        }
+        if (keys['ArrowDown']) {
+          player.y += speed;
+          player.lastDirection = { x: 0, y: 1 };
+          moved = true;
+        }
+        if (keys['ArrowLeft']) {
+          player.x -= speed;
+          player.lastDirection = { x: -1, y: 0 };
+          moved = true;
+        }
+        if (keys['ArrowRight']) {
+          player.x += speed;
+          player.lastDirection = { x: 1, y: 0 };
+          moved = true;
+        }
+        
         player.x = Math.max(player.radius, Math.min(3000 - player.radius, player.x));
         player.y = Math.max(player.radius, Math.min(3000 - player.radius, player.y));
+        
+        if (moved && socket) {
+          socket.emit('playerMove', {
+            x: player.x,
+            y: player.y,
+            radius: player.radius,
+            name: playerName,
+            alive: player.alive,
+            score: score
+          });
+        }
       }
+      
+      function updateProjectiles() {
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+          let proj = projectiles[i];
+          
+          proj.x += proj.vx;
+          proj.y += proj.vy;
+          proj.life--;
+          
+          // Remove if out of bounds or life expired
+          if (proj.x < 0 || proj.x > 3000 || proj.y < 0 || proj.y > 3000 || proj.life <= 0) {
+            projectiles.splice(i, 1);
+            continue;
+          }
+          
+          // Check collisions with enemies
+          for (let j = enemies.length - 1; j >= 0; j--) {
+            let enemy = enemies[j];
+            let dist = Math.hypot(proj.x - enemy.x, proj.y - enemy.y);
+            
+            if (dist < proj.radius + enemy.radius) {
+              // Hit enemy
+              enemy.radius = Math.max(10, enemy.radius - proj.damage);
+              projectiles.splice(i, 1);
+              
+              if (enemy.radius <= 10) {
+                score += 100;
+                enemies.splice(j, 1);
+                // Respawn enemy after delay
+                setTimeout(() => {
+                  enemies.push({
+                    x: Math.random() * 3000,
+                    y: Math.random() * 3000,
+                    radius: 16,
+                    color: 'red',
+                    speed: 2 + Math.random(),
+                    direction: Math.random() * 2 * Math.PI,
+                    detectionRadius: 155 + Math.random() * 50,
+                    wanderStart: Date.now(),
+                    name: enemyNames[Math.floor(Math.random() * enemyNames.length)],
+                    aggressionLevel: Math.random(),
+                    memory: [],
+                    lastPlayerSeen: null,
+                    huntMode: false,
+                    fleeMode: false,
+                    teamUp: null
+                  });
+                }, 3000);
+              }
+              break;
+            }
+          }
+        }
+      }
+      
       function detectPlayerCollisions() {
         // Collisions with food
         for (let i = 0; i < foods.length; i++) {
@@ -577,6 +999,24 @@
             }, 5000);
           }
         }
+        
+        // Collisions with powerups
+        for (let i = 0; i < powerups.length; i++) {
+          const powerup = powerups[i];
+          const dx = player.x - powerup.x;
+          const dy = player.y - powerup.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance < player.radius + powerup.radius) {
+            if (powerup.type === 'shooter') {
+              player.ammo += 10;
+              updatePowerupHUD();
+            }
+            powerups.splice(i, 1);
+            i--;
+            score += 25;
+          }
+        }
+        
         // Collisions with enemies
         for (let i = 0; i < enemies.length; i++) {
           const enemy = enemies[i];
@@ -589,10 +1029,12 @@
               player.alive = false;
               spectatorTarget = enemy;
               gameState = "spectator";
-              updateLocalPlayerInGun();
+              if (socket) {
+                socket.emit('playerDied', { name: playerName });
+              }
               return;
             } else {
-              player.radius += 1;
+              player.radius += 2;
               score += 50;
               enemies.splice(i, 1);
               i--;
@@ -602,11 +1044,17 @@
                   y: Math.random() * 3000,
                   radius: 16,
                   color: 'red',
-                  speed: 2,
+                  speed: 2 + Math.random(),
                   direction: Math.random() * 2 * Math.PI,
-                  detectionRadius: 155,
+                  detectionRadius: 155 + Math.random() * 50,
                   wanderStart: Date.now(),
-                  name: enemyNames[Math.floor(Math.random() * enemyNames.length)]
+                  name: enemyNames[Math.floor(Math.random() * enemyNames.length)],
+                  aggressionLevel: Math.random(),
+                  memory: [],
+                  lastPlayerSeen: null,
+                  huntMode: false,
+                  fleeMode: false,
+                  teamUp: null
                 });
               }, 5000);
             }
@@ -614,10 +1062,12 @@
         }
       }
       
-      // Enemies eat food and each other.
+      // Enemies eat food and each other with enhanced AI
       function simulateEnemyConsumption() {
         for (let i = 0; i < enemies.length; i++) {
           const enemy = enemies[i];
+          
+          // Eat food
           for (let j = 0; j < foods.length; j++) {
             const food = foods[j];
             const dx = enemy.x - food.x;
@@ -638,85 +1088,56 @@
               }, 5000);
             }
           }
+          
+          // Eat powerups
+          for (let j = 0; j < powerups.length; j++) {
+            const powerup = powerups[j];
+            const dx = enemy.x - powerup.x;
+            const dy = enemy.y - powerup.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < enemy.radius + powerup.radius) {
+              enemy.radius += 2;
+              powerups.splice(j, 1);
+              j--;
+            }
+          }
+          
+          // Eat other enemies
           for (let j = 0; j < enemies.length; j++) {
             if (i === j) continue;
             const other = enemies[j];
             const dx = enemy.x - other.x;
             const dy = enemy.y - other.y;
             const distance = Math.hypot(dx, dy);
-            if (distance < enemy.radius + other.radius && enemy.radius > other.radius) {
-              enemy.radius += 2;
+            if (distance < enemy.radius + other.radius && enemy.radius > other.radius * 1.1) {
+              enemy.radius += Math.floor(other.radius / 2);
               enemies.splice(j, 1);
-              j--;
+              if (j < i) i--; // Adjust index
               setTimeout(() => {
                 enemies.push({
                   x: Math.random() * 3000,
                   y: Math.random() * 3000,
                   radius: 16,
                   color: 'red',
-                  speed: 2,
+                  speed: 2 + Math.random(),
                   direction: Math.random() * 2 * Math.PI,
-                  detectionRadius: 155,
+                  detectionRadius: 155 + Math.random() * 50,
                   wanderStart: Date.now(),
-                  name: enemyNames[Math.floor(Math.random() * enemyNames.length)]
+                  name: enemyNames[Math.floor(Math.random() * enemyNames.length)],
+                  aggressionLevel: Math.random(),
+                  memory: [],
+                  lastPlayerSeen: null,
+                  huntMode: false,
+                  fleeMode: false,
+                  teamUp: null
                 });
               }, 5000);
+              break;
             }
           }
         }
       }
-      function moveEnemies() {
-        for (let enemy of enemies) {
-          if (Date.now() - enemy.wanderStart > 5000) {
-            enemy.direction = Math.random() * 2 * Math.PI;
-            enemy.wanderStart = Date.now();
-          }
-          let closestFood = null;
-          let closestEnemy = null;
-          let closestFoodDist = Infinity;
-          let closestEnemyDist = Infinity;
-          for (let food of foods) {
-            const dist = Math.hypot(enemy.x - food.x, enemy.y - food.y);
-            if (dist < closestFoodDist) {
-              closestFoodDist = dist;
-              closestFood = food;
-            }
-          }
-          for (let other of enemies) {
-            if (other === enemy) continue;
-            const dist = Math.hypot(enemy.x - other.x, enemy.y - other.y);
-            if (other.radius < enemy.radius && dist < closestEnemyDist) {
-              closestEnemyDist = dist;
-              closestEnemy = other;
-            }
-          }
-          const playerDist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-          if (player.alive && player.radius > enemy.radius &&
-              playerDist < enemy.detectionRadius &&
-              playerDist < closestFoodDist &&
-              playerDist < closestEnemyDist &&
-              Math.random() < 0.5) {
-            const angle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
-            enemy.x += Math.cos(angle) * enemy.speed;
-            enemy.y += Math.sin(angle) * enemy.speed;
-          } else if (player.alive && playerDist < enemy.detectionRadius && enemy.radius > player.radius) {
-            const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-            enemy.x += Math.cos(angle) * enemy.speed;
-            enemy.y += Math.sin(angle) * enemy.speed;
-          } else if (closestFood && closestFoodDist < closestEnemyDist) {
-            const angle = Math.atan2(closestFood.y - enemy.y, closestFood.x - enemy.x);
-            enemy.x += Math.cos(angle) * enemy.speed;
-            enemy.y += Math.sin(angle) * enemy.speed;
-          } else if (closestEnemy) {
-            const angle = Math.atan2(closestEnemy.y - enemy.y, closestEnemy.x - enemy.x);
-            enemy.x += Math.cos(angle) * enemy.speed;
-            enemy.y += Math.sin(angle) * enemy.speed;
-          } else {
-            enemy.x += Math.cos(enemy.direction) * enemy.speed;
-            enemy.y += Math.sin(enemy.direction) * enemy.speed;
-          }
-        }
-      }
+      
       function updateCamera() {
         if (gameState === "playing" && player.alive) {
           camera.x = player.x - canvas.width / 2;
@@ -732,82 +1153,6 @@
         camera.y = Math.max(0, Math.min(3000 - canvas.height, camera.y));
       }
       
-      /* ------------------ Gun.js Integration ------------------ */
-      const gun = Gun();
-      const playersRef = gun.get('players');
-      const chatRef = gun.get('chat');
-      const globalStateRef = gun.get('globalState');
-      
-      let isHost = false;
-      // Determine host: if no host is set in globalState, become host.
-      globalStateRef.get('host').once(data => {
-        if (!data) {
-          globalStateRef.get('host').put(playerName);
-          isHost = true;
-        } else {
-          isHost = (data === playerName);
-        }
-      });
-      
-      // Container for remote players.
-      let remotePlayers = {};
-      playersRef.map().on((data, key) => {
-        if (data && key !== playerName) {
-          remotePlayers[key] = data;
-          updateLeaderboardUI();
-        }
-      });
-      
-      function updateLocalPlayerInGun() {
-        playersRef.get(playerName).put({
-          name: playerName,
-          x: player.x,
-          y: player.y,
-          radius: player.radius,
-          score: score,
-          alive: player.alive,
-          updated: Date.now()
-        });
-      }
-      
-      if (!isHost) {
-        globalStateRef.on(data => {
-          if (data && data.foods && data.enemies) {
-            foods = data.foods;
-            enemies = data.enemies;
-          }
-        });
-      }
-      
-      // Chat functionality.
-      chatRef.map().on((data, key) => {
-        if (data) {
-          addChatMessage(data.name, data.message);
-        }
-      });
-      
-      function sendChatMessage(msg) {
-        chatRef.set({
-          name: playerName,
-          message: msg,
-          timestamp: Date.now()
-        });
-      }
-      
-      function addChatMessage(name, message) {
-        const chatLog = document.getElementById('chatLog');
-        const messageDiv = document.createElement('div');
-        messageDiv.textContent = name + ": " + message;
-        chatLog.appendChild(messageDiv);
-        chatLog.scrollTop = chatLog.scrollHeight;
-      }
-      
-      function updateGlobalState() {
-        if (isHost) {
-          globalStateRef.put({ foods: foods, enemies: enemies });
-        }
-      }
-      
       function updateLeaderboardUI() {
         let leaderboardArray = [];
         leaderboardArray.push({ name: playerName, score: score });
@@ -818,9 +1163,31 @@
         let html = "<h3>Top 5 Players</h3>";
         for (let i = 0; i < Math.min(5, leaderboardArray.length); i++) {
           const entry = leaderboardArray[i];
-          html += `<div>${entry.name}: ${entry.score}</div>`;
+          html += `<div>${entry.name}: ${entry.score || 0}</div>`;
         }
         document.getElementById('leaderboard').innerHTML = html;
+      }
+      
+      function updatePowerupHUD() {
+        document.getElementById('ammoCount').textContent = `Ammo: ${player.ammo}`;
+        document.getElementById('powerupStatus').textContent = 
+          player.ammo > 0 ? 'Shooter Active' : 'No Power-ups';
+      }
+      
+      function sendChatMessage(msg) {
+        if (socket) {
+          socket.emit('chatMessage', { name: playerName, message: msg });
+        } else {
+          addChatMessage(playerName, msg);
+        }
+      }
+      
+      function addChatMessage(name, message) {
+        const chatLog = document.getElementById('chatLog');
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = name + ": " + message;
+        chatLog.appendChild(messageDiv);
+        chatLog.scrollTop = chatLog.scrollHeight;
       }
       
       function drawEmote(x, y, emote, radius) {
@@ -829,6 +1196,7 @@
         ctx.textAlign = "center";
         ctx.fillText(emote, x, y - radius - 20);
       }
+      
       function drawGame() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (backgroundImage.complete) {
@@ -843,7 +1211,8 @@
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
         updateCamera();
-        // Draw remote players.
+        
+        // Draw remote players
         for (let key in remotePlayers) {
           const rp = remotePlayers[key];
           if (!rp.alive) continue;
@@ -871,12 +1240,9 @@
           ctx.fillText(rp.name, rp.x - camera.x + 1, rp.y - camera.y - rp.radius - 8);
           ctx.fillStyle = "#fff";
           ctx.fillText(rp.name, rp.x - camera.x, rp.y - camera.y - rp.radius - 10);
-          
-          if (rp.currentEmote && Date.now() - rp.emoteTimestamp < 3000) {
-            drawEmote(rp.x - camera.x, rp.y - camera.y, rp.currentEmote, rp.radius);
-          }
         }
-        // Draw local player.
+        
+        // Draw local player
         if (gameState === "playing" && player.alive) {
           // Draw shadow
           ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -928,7 +1294,7 @@
           ctx.shadowBlur = 0;
         }
         
-        // Draw enemies.
+        // Draw enemies
         for (let enemy of enemies) {
           // Draw shadow
           ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -936,10 +1302,10 @@
           ctx.ellipse(enemy.x - camera.x, enemy.y - camera.y + enemy.radius + 5, enemy.radius * 0.8, enemy.radius * 0.3, 0, 0, Math.PI * 2);
           ctx.fill();
           
-          // Add menacing glow for larger enemies
-          if (enemy.radius > 20) {
+          // Add menacing glow for larger enemies or hunt mode
+          if (enemy.radius > 20 || enemy.huntMode) {
             ctx.shadowColor = '#ff0000';
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 10 + (enemy.huntMode ? 5 : 0);
           }
           
           if (enemySprite.complete) {
@@ -947,23 +1313,27 @@
           } else {
             ctx.beginPath();
             ctx.arc(enemy.x - camera.x, enemy.y - camera.y, enemy.radius, 0, Math.PI * 2);
-            ctx.fillStyle = enemy.color;
+            ctx.fillStyle = enemy.huntMode ? '#ff0000' : enemy.color;
             ctx.fill();
             ctx.closePath();
           }
           
           ctx.shadowBlur = 0;
           
-          // Name with shadow
+          // Name with shadow and status indicator
           ctx.font = "12px 'Press Start 2P'";
           ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.textAlign = "center";
+          let nameColor = "#ff6666";
+          if (enemy.huntMode) nameColor = "#ff0000";
+          if (enemy.fleeMode) nameColor = "#ffaa00";
+          
           ctx.fillText(enemy.name, enemy.x - camera.x + 1, enemy.y - camera.y - enemy.radius - 8);
-          ctx.fillStyle = "#ff6666";
+          ctx.fillStyle = nameColor;
           ctx.fillText(enemy.name, enemy.x - camera.x, enemy.y - camera.y - enemy.radius - 10);
         }
         
-        // Draw food.
+        // Draw food
         for (let food of foods) {
           if (!food.eaten) {
             // Draw shadow
@@ -989,33 +1359,103 @@
             ctx.shadowBlur = 0;
           }
         }
+        
+        // Draw powerups
+        for (let powerup of powerups) {
+          // Pulsing effect
+          let pulseScale = 1 + Math.sin(Date.now() * 0.01) * 0.2;
+          
+          // Draw shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(powerup.x - camera.x, powerup.y - camera.y + powerup.radius + 3, powerup.radius * 0.8, powerup.radius * 0.2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Add glow
+          ctx.shadowColor = '#ff00ff';
+          ctx.shadowBlur = 15;
+          
+          if (powerupSprite.complete) {
+            let size = powerup.radius * 2 * pulseScale;
+            ctx.drawImage(powerupSprite, 
+              powerup.x - camera.x - size/2, 
+              powerup.y - camera.y - size/2, 
+              size, size);
+          } else {
+            ctx.beginPath();
+            ctx.arc(powerup.x - camera.x, powerup.y - camera.y, powerup.radius * pulseScale, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff00ff';
+            ctx.fill();
+            ctx.closePath();
+          }
+          
+          ctx.shadowBlur = 0;
+        }
+        
+        // Draw projectiles
+        for (let proj of projectiles) {
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 8;
+          
+          if (projectileSprite.complete) {
+            ctx.drawImage(projectileSprite, 
+              proj.x - camera.x - proj.radius, 
+              proj.y - camera.y - proj.radius, 
+              proj.radius * 2, proj.radius * 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(proj.x - camera.x, proj.y - camera.y, proj.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#00ffff';
+            ctx.fill();
+            ctx.closePath();
+          }
+          
+          ctx.shadowBlur = 0;
+        }
+        
         drawMinimap();
         updateLeaderboardUI();
       }
+      
       function drawMinimap() {
         minimapCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
         minimapCtx.fillStyle = '#333';
         minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
         const scaleX = minimapCanvas.width / 3000;
         const scaleY = minimapCanvas.height / 3000;
+        
+        // Player
         minimapCtx.beginPath();
-        minimapCtx.arc(player.x * scaleX, player.y * scaleY, player.radius * scaleX, 0, Math.PI * 2);
+        minimapCtx.arc(player.x * scaleX, player.y * scaleY, Math.max(2, player.radius * scaleX), 0, Math.PI * 2);
         minimapCtx.fillStyle = player.color;
         minimapCtx.fill();
         minimapCtx.closePath();
+        
+        // Food
         for (let food of foods) {
           if (!food.eaten) {
             minimapCtx.beginPath();
-            minimapCtx.arc(food.x * scaleX, food.y * scaleY, food.radius * scaleX, 0, Math.PI * 2);
+            minimapCtx.arc(food.x * scaleX, food.y * scaleY, Math.max(1, food.radius * scaleX), 0, Math.PI * 2);
             minimapCtx.fillStyle = food.color;
             minimapCtx.fill();
             minimapCtx.closePath();
           }
         }
+        
+        // Enemies
         for (let enemy of enemies) {
           minimapCtx.beginPath();
-          minimapCtx.arc(enemy.x * scaleX, enemy.y * scaleY, enemy.radius * scaleX, 0, Math.PI * 2);
-          minimapCtx.fillStyle = enemy.color;
+          minimapCtx.arc(enemy.x * scaleX, enemy.y * scaleY, Math.max(2, enemy.radius * scaleX), 0, Math.PI * 2);
+          minimapCtx.fillStyle = enemy.huntMode ? '#ff0000' : enemy.color;
+          minimapCtx.fill();
+          minimapCtx.closePath();
+        }
+        
+        // Powerups
+        for (let powerup of powerups) {
+          minimapCtx.beginPath();
+          minimapCtx.arc(powerup.x * scaleX, powerup.y * scaleY, Math.max(2, powerup.radius * scaleX), 0, Math.PI * 2);
+          minimapCtx.fillStyle = '#ff00ff';
           minimapCtx.fill();
           minimapCtx.closePath();
         }
@@ -1026,13 +1466,12 @@
           handleDash();
           movePlayer();
           detectPlayerCollisions();
-          updateLocalPlayerInGun();
         }
-        if (isHost) {
-          simulateEnemyConsumption();
-          moveEnemies();
-          updateGlobalState();
-        }
+        
+        updateEnemyAI();
+        simulateEnemyConsumption();
+        updateProjectiles();
+        
         drawGame();
         gameLoopId = requestAnimationFrame(gameLoop);
       }
@@ -1046,14 +1485,19 @@
         player.currentEmote = null;
         player.emoteTimestamp = 0;
         player.alive = true;
+        player.ammo = 0;
+        player.lastDirection = { x: 1, y: 0 };
         foods = [];
         enemies = [];
+        powerups = [];
+        projectiles = [];
         keys = {};
         generateFood();
         generateEnemies();
+        updatePowerupHUD();
       }
       
-      // Chat input event.
+      // Chat input event
       document.getElementById('chatInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const msg = e.target.value;
@@ -1064,7 +1508,7 @@
         }
       });
       
-      // Emote buttons.
+      // Emote buttons
       document.querySelectorAll('.emoteBtn').forEach(btn => {
         btn.addEventListener('click', () => {
           player.currentEmote = btn.textContent;
