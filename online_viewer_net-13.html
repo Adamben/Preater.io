@@ -7,25 +7,41 @@
   <!-- Include Gun.js from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    
     body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #000;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+      font-family: 'Press Start 2P', cursive;
     }
     canvas {
       display: block;
       margin: 0 auto;
-      border: 1px solid #333;
+      border: 3px solid #444;
+      border-radius: 8px;
       image-rendering: pixelated;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.8),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      transform: perspective(1000px) rotateX(2deg);
     }
     .info {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 15px;
+      left: 15px;
       font-family: 'Press Start 2P', cursive;
       color: #fff;
       z-index: 10;
+      background: linear-gradient(135deg, rgba(0, 20, 40, 0.9), rgba(0, 10, 20, 0.9));
+      padding: 15px;
+      border-radius: 8px;
+      border: 2px solid #4a9eff;
+      box-shadow: 
+        0 8px 32px rgba(74, 158, 255, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      transform: translateZ(10px);
     }
     /* Home Menu overlay */
     #homeMenu {
@@ -34,7 +50,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.9);
+      background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(26, 26, 46, 0.95));
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -44,85 +61,182 @@
       font-family: 'Press Start 2P', cursive;
       text-align: center;
     }
+    #homeMenu h1 {
+      text-shadow: 
+        0 0 20px #4a9eff,
+        0 0 40px #4a9eff,
+        0 4px 8px rgba(0, 0, 0, 0.8);
+      margin-bottom: 10px;
+      transform: perspective(500px) rotateX(15deg);
+    }
+    #homeMenu h2 {
+      color: #ff6b6b;
+      text-shadow: 
+        0 0 15px #ff6b6b,
+        0 2px 4px rgba(0, 0, 0, 0.8);
+      margin-bottom: 30px;
+    }
     #homeMenu input {
-      padding: 5px;
+      padding: 12px 20px;
       font-size: 14px;
-      margin: 10px 0;
+      margin: 15px 0;
       text-align: center;
+      background: linear-gradient(135deg, rgba(20, 20, 40, 0.9), rgba(10, 10, 30, 0.9));
+      border: 2px solid #4a9eff;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Press Start 2P', cursive;
+      box-shadow: 
+        0 4px 15px rgba(74, 158, 255, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
     }
     #homeMenu button {
-      padding: 10px 20px;
+      padding: 15px 30px;
       font-size: 16px;
-      margin-top: 10px;
+      margin-top: 20px;
       cursor: pointer;
-      background: #000;
+      background: linear-gradient(135deg, #4a9eff, #357abd);
       color: #fff;
-      border: 2px solid #fff;
+      border: 2px solid #6bb6ff;
+      border-radius: 8px;
+      font-family: 'Press Start 2P', cursive;
+      box-shadow: 
+        0 8px 25px rgba(74, 158, 255, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
+    #homeMenu button:hover {
+      transform: translateY(-4px);
+      box-shadow: 
+        0 12px 35px rgba(74, 158, 255, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+    #homeMenu button:active {
+      transform: translateY(0px);
+      box-shadow: 
+        0 4px 15px rgba(74, 158, 255, 0.4),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     /* Leaderboard styling (top 5 players) */
     #leaderboard {
       position: absolute;
-      top: 10px;
+      top: 15px;
       left: 50%;
       transform: translateX(-50%);
       font-family: 'Press Start 2P', cursive;
       color: #fff;
       z-index: 10;
-      background-color: rgba(0, 0, 0, 0.7);
-      padding: 10px;
-      border: 2px solid #fff;
+      background: linear-gradient(135deg, rgba(20, 40, 20, 0.9), rgba(10, 30, 10, 0.9));
+      padding: 15px;
+      border: 2px solid #4eff4a;
+      border-radius: 8px;
       max-height: 200px;
       overflow-y: auto;
+      box-shadow: 
+        0 8px 32px rgba(78, 255, 74, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      transform: translateX(-50%) perspective(800px) rotateX(5deg);
     }
     /* Chat styling */
     #chatContainer {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
-      width: 300px;
-      max-height: 200px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 10px;
+      bottom: 15px;
+      right: 15px;
+      width: 320px;
+      max-height: 220px;
+      background: linear-gradient(135deg, rgba(40, 20, 40, 0.9), rgba(30, 10, 30, 0.9));
+      padding: 15px;
       font-family: 'Press Start 2P', cursive;
       color: #fff;
       overflow-y: auto;
       z-index: 30;
+      border: 2px solid #ff4a9e;
+      border-radius: 8px;
+      box-shadow: 
+        0 8px 32px rgba(255, 74, 158, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      transform: perspective(600px) rotateY(-5deg);
     }
     #chatInput {
-      width: calc(100% - 20px);
-      padding: 5px;
-      font-size: 14px;
-      margin-top: 5px;
+      width: calc(100% - 24px);
+      padding: 8px 12px;
+      font-size: 12px;
+      margin-top: 8px;
       box-sizing: border-box;
+      background: linear-gradient(135deg, rgba(20, 10, 20, 0.9), rgba(10, 5, 10, 0.9));
+      border: 2px solid #ff4a9e;
+      border-radius: 6px;
+      color: #fff;
+      font-family: 'Press Start 2P', cursive;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     /* Emote styling */
     #emoteContainer {
       position: absolute;
-      bottom: 60px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 5px;
+      bottom: 80px;
+      right: 15px;
+      background: linear-gradient(135deg, rgba(40, 40, 20, 0.9), rgba(30, 30, 10, 0.9));
+      padding: 10px;
       z-index: 30;
+      border: 2px solid #ffff4a;
+      border-radius: 8px;
+      box-shadow: 
+        0 8px 25px rgba(255, 255, 74, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      transform: perspective(500px) rotateZ(-2deg);
     }
     #emoteContainer button {
-      background: transparent;
-      border: none;
-      font-size: 24px;
+      background: linear-gradient(135deg, rgba(60, 60, 30, 0.8), rgba(40, 40, 20, 0.8));
+      border: 2px solid #ffff4a;
+      border-radius: 6px;
+      font-size: 20px;
       cursor: pointer;
+      margin: 2px;
+      padding: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(255, 255, 74, 0.2);
+    }
+    #emoteContainer button:hover {
+      transform: translateY(-2px) scale(1.1);
+      box-shadow: 0 6px 18px rgba(255, 255, 74, 0.4);
     }
     /* Minimap styling */
     .minimap {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 200px;
-      height: 200px;
-      border: 2px solid #333;
-      background-color: #222;
+      top: 15px;
+      right: 15px;
+      width: 220px;
+      height: 220px;
+      border: 3px solid #666;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #333, #222);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      transform: perspective(800px) rotateY(5deg) rotateX(-5deg);
     }
     .minimap canvas {
       width: 100%;
       height: 100%;
+      border-radius: 5px;
+    }
+    .minimap::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      background: linear-gradient(45deg, #4a9eff, #ff4a9e, #4eff4a, #ffff4a);
+      border-radius: 8px;
+      z-index: -1;
+      opacity: 0.3;
+      animation: glow 3s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from { opacity: 0.2; }
+      to { opacity: 0.5; }
     }
   </style>
 </head>
@@ -185,74 +299,143 @@
       }
       function createEnemySprite() {
         const offCanvas = document.createElement('canvas');
-        offCanvas.width = 32;
-        offCanvas.height = 32;
+        offCanvas.width = 40;
+        offCanvas.height = 40;
         const offCtx = offCanvas.getContext('2d');
+        
+        // Shadow
+        offCtx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        offCtx.fillRect(6, 34, 28, 4);
+        
+        // Main body with gradient
+        const gradient = offCtx.createLinearGradient(0, 0, 0, 32);
+        gradient.addColorStop(0, '#ff4444');
+        gradient.addColorStop(0.5, '#ff0000');
+        gradient.addColorStop(1, '#cc0000');
+        offCtx.fillStyle = gradient;
+        offCtx.fillRect(6, 10, 24, 24);
+        
+        // Top highlight
+        offCtx.fillStyle = '#ff8888';
+        offCtx.beginPath();
+        offCtx.moveTo(6, 10);
+        offCtx.lineTo(10, 6);
+        offCtx.lineTo(34, 6);
+        offCtx.lineTo(30, 10);
+        offCtx.closePath();
+        offCtx.fill();
+        
+        // Right shadow
+        offCtx.fillStyle = '#880000';
+        offCtx.beginPath();
+        offCtx.moveTo(30, 10);
+        offCtx.lineTo(34, 6);
+        offCtx.lineTo(34, 30);
+        offCtx.lineTo(30, 34);
+        offCtx.closePath();
+        offCtx.fill();
+        
+        // Menacing eyes with red glow
         offCtx.fillStyle = '#ff0000';
-        offCtx.fillRect(4, 8, 24, 24);
-        offCtx.fillStyle = '#ff6666';
-        offCtx.beginPath();
-        offCtx.moveTo(4, 8);
-        offCtx.lineTo(8, 4);
-        offCtx.lineTo(32, 4);
-        offCtx.lineTo(28, 8);
-        offCtx.closePath();
-        offCtx.fill();
-        offCtx.fillStyle = '#990000';
-        offCtx.beginPath();
-        offCtx.moveTo(28, 8);
-        offCtx.lineTo(32, 4);
-        offCtx.lineTo(32, 28);
-        offCtx.lineTo(28, 32);
-        offCtx.closePath();
-        offCtx.fill();
-        offCtx.fillStyle = '#000000';
-        offCtx.fillRect(10, 16, 4, 4);
-        offCtx.fillRect(18, 16, 4, 4);
-        offCtx.fillRect(10, 24, 12, 2);
+        offCtx.shadowColor = '#ff0000';
+        offCtx.shadowBlur = 3;
+        offCtx.fillRect(12, 18, 4, 4);
+        offCtx.fillRect(20, 18, 4, 4);
+        offCtx.shadowBlur = 0;
+        
+        // Angry mouth
+        offCtx.fillStyle = '#440000';
+        offCtx.fillRect(12, 26, 12, 2);
+        
         return offCanvas.toDataURL();
       }
       function createPlayerSprite() {
         const offCanvas = document.createElement('canvas');
-        offCanvas.width = 32;
-        offCanvas.height = 32;
+        offCanvas.width = 40;
+        offCanvas.height = 40;
         const offCtx = offCanvas.getContext('2d');
-        offCtx.fillStyle = '#0000ff';
-        offCtx.fillRect(4, 8, 24, 24);
-        offCtx.fillStyle = '#6666ff';
+        
+        // Shadow
+        offCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        offCtx.fillRect(6, 34, 28, 4);
+        
+        // Main body with gradient effect
+        const gradient = offCtx.createLinearGradient(0, 0, 0, 32);
+        gradient.addColorStop(0, '#4466ff');
+        gradient.addColorStop(0.5, '#0044ff');
+        gradient.addColorStop(1, '#002299');
+        offCtx.fillStyle = gradient;
+        offCtx.fillRect(6, 10, 24, 24);
+        
+        // Top highlight
+        offCtx.fillStyle = '#88aaff';
         offCtx.beginPath();
-        offCtx.moveTo(4, 8);
-        offCtx.lineTo(8, 4);
-        offCtx.lineTo(32, 4);
-        offCtx.lineTo(28, 8);
+        offCtx.moveTo(6, 10);
+        offCtx.lineTo(10, 6);
+        offCtx.lineTo(34, 6);
+        offCtx.lineTo(30, 10);
         offCtx.closePath();
         offCtx.fill();
-        offCtx.fillStyle = '#000099';
+        
+        // Right shadow
+        offCtx.fillStyle = '#001155';
         offCtx.beginPath();
-        offCtx.moveTo(28, 8);
-        offCtx.lineTo(32, 4);
-        offCtx.lineTo(32, 28);
-        offCtx.lineTo(28, 32);
+        offCtx.moveTo(30, 10);
+        offCtx.lineTo(34, 6);
+        offCtx.lineTo(34, 30);
+        offCtx.lineTo(30, 34);
         offCtx.closePath();
         offCtx.fill();
+        
+        // Eyes with glow
         offCtx.fillStyle = '#ffffff';
-        offCtx.fillRect(10, 16, 4, 4);
-        offCtx.fillRect(18, 16, 4, 4);
-        offCtx.fillRect(10, 24, 12, 2);
+        offCtx.shadowColor = '#ffffff';
+        offCtx.shadowBlur = 2;
+        offCtx.fillRect(12, 18, 4, 4);
+        offCtx.fillRect(20, 18, 4, 4);
+        offCtx.shadowBlur = 0;
+        
+        // Mouth
+        offCtx.fillStyle = '#ffffff';
+        offCtx.fillRect(12, 26, 12, 2);
+        
         return offCanvas.toDataURL();
       }
       function createFoodSprite() {
         const offCanvas = document.createElement('canvas');
-        offCanvas.width = 32;
-        offCanvas.height = 32;
+        offCanvas.width = 20;
+        offCanvas.height = 20;
         const offCtx = offCanvas.getContext('2d');
-        offCtx.fillStyle = '#d2a679';
-        offCtx.fillRect(0, 0, 32, 32);
-        offCtx.fillStyle = '#654321';
-        offCtx.fillRect(8, 8, 4, 4);
-        offCtx.fillRect(20, 8, 4, 4);
-        offCtx.fillRect(14, 18, 4, 4);
-        offCtx.fillRect(8, 20, 4, 4);
+        
+        // Shadow
+        offCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        offCtx.fillRect(2, 16, 16, 2);
+        
+        // Main food body with golden gradient
+        const gradient = offCtx.createRadialGradient(10, 8, 2, 10, 8, 8);
+        gradient.addColorStop(0, '#ffeb3b');
+        gradient.addColorStop(0.7, '#ffc107');
+        gradient.addColorStop(1, '#ff8f00');
+        offCtx.fillStyle = gradient;
+        offCtx.beginPath();
+        offCtx.arc(10, 10, 8, 0, Math.PI * 2);
+        offCtx.fill();
+        
+        // Highlight
+        offCtx.fillStyle = '#fff59d';
+        offCtx.beginPath();
+        offCtx.arc(8, 8, 3, 0, Math.PI * 2);
+        offCtx.fill();
+        
+        // Sparkle effect
+        offCtx.fillStyle = '#ffffff';
+        offCtx.shadowColor = '#ffeb3b';
+        offCtx.shadowBlur = 2;
+        offCtx.fillRect(6, 6, 1, 1);
+        offCtx.fillRect(13, 8, 1, 1);
+        offCtx.fillRect(9, 13, 1, 1);
+        offCtx.shadowBlur = 0;
+        
         return offCanvas.toDataURL();
       }
       
@@ -664,6 +847,13 @@
         for (let key in remotePlayers) {
           const rp = remotePlayers[key];
           if (!rp.alive) continue;
+          
+          // Draw shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(rp.x - camera.x, rp.y - camera.y + rp.radius + 5, rp.radius * 0.8, rp.radius * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          
           if (playerSprite.complete) {
             ctx.drawImage(playerSprite, rp.x - camera.x - rp.radius, rp.y - camera.y - rp.radius, rp.radius * 2, rp.radius * 2);
           } else {
@@ -673,16 +863,31 @@
             ctx.fill();
             ctx.closePath();
           }
-          ctx.font = "16px 'Press Start 2P'";
-          ctx.fillStyle = "#fff";
+          
+          // Name with shadow
+          ctx.font = "14px 'Press Start 2P'";
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.textAlign = "center";
+          ctx.fillText(rp.name, rp.x - camera.x + 1, rp.y - camera.y - rp.radius - 8);
+          ctx.fillStyle = "#fff";
           ctx.fillText(rp.name, rp.x - camera.x, rp.y - camera.y - rp.radius - 10);
+          
           if (rp.currentEmote && Date.now() - rp.emoteTimestamp < 3000) {
             drawEmote(rp.x - camera.x, rp.y - camera.y, rp.currentEmote, rp.radius);
           }
         }
         // Draw local player.
         if (gameState === "playing" && player.alive) {
+          // Draw shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+          ctx.beginPath();
+          ctx.ellipse(player.x - camera.x, player.y - camera.y + player.radius + 5, player.radius * 0.8, player.radius * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Add glow effect for player
+          ctx.shadowColor = '#4a9eff';
+          ctx.shadowBlur = 15;
+          
           if (playerSprite.complete) {
             ctx.drawImage(playerSprite, player.x - camera.x - player.radius, player.y - camera.y - player.radius, player.radius * 2, player.radius * 2);
           } else {
@@ -692,36 +897,51 @@
             ctx.fill();
             ctx.closePath();
           }
-          ctx.font = "16px 'Press Start 2P'";
-          ctx.fillStyle = "#fff";
+          
+          ctx.shadowBlur = 0;
+          
+          // Name with shadow and glow
+          ctx.font = "14px 'Press Start 2P'";
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.textAlign = "center";
+          ctx.fillText(playerName, player.x - camera.x + 1, player.y - camera.y - player.radius - 8);
+          ctx.fillStyle = "#4a9eff";
+          ctx.shadowColor = '#4a9eff';
+          ctx.shadowBlur = 8;
           ctx.fillText(playerName, player.x - camera.x, player.y - camera.y - player.radius - 10);
+          ctx.shadowBlur = 0;
+          
           if (player.currentEmote && Date.now() - player.emoteTimestamp < 3000) {
             drawEmote(player.x - camera.x, player.y - camera.y, player.currentEmote, player.radius);
           }
         } else if (gameState === "spectator") {
-          ctx.font = "24px 'Press Start 2P'";
-          ctx.fillStyle = "#fff";
+          ctx.font = "20px 'Press Start 2P'";
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.textAlign = "center";
+          ctx.fillText("Spectating", canvas.width / 2 + 2, 52);
+          ctx.fillText("Press M to return to menu", canvas.width / 2 + 2, 82);
+          ctx.fillStyle = "#fff";
+          ctx.shadowColor = '#4a9eff';
+          ctx.shadowBlur = 10;
           ctx.fillText("Spectating", canvas.width / 2, 50);
           ctx.fillText("Press M to return to menu", canvas.width / 2, 80);
+          ctx.shadowBlur = 0;
         }
-        // Draw food.
-        for (let food of foods) {
-          if (!food.eaten) {
-            if (foodSprite.complete) {
-              ctx.drawImage(foodSprite, food.x - camera.x - food.radius, food.y - camera.y - food.radius, food.radius * 2, food.radius * 2);
-            } else {
-              ctx.beginPath();
-              ctx.arc(food.x - camera.x, food.y - camera.y, food.radius, 0, Math.PI * 2);
-              ctx.fillStyle = food.color;
-              ctx.fill();
-              ctx.closePath();
-            }
-          }
-        }
+        
         // Draw enemies.
         for (let enemy of enemies) {
+          // Draw shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+          ctx.beginPath();
+          ctx.ellipse(enemy.x - camera.x, enemy.y - camera.y + enemy.radius + 5, enemy.radius * 0.8, enemy.radius * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Add menacing glow for larger enemies
+          if (enemy.radius > 20) {
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 10;
+          }
+          
           if (enemySprite.complete) {
             ctx.drawImage(enemySprite, enemy.x - camera.x - enemy.radius, enemy.y - camera.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
           } else {
@@ -731,10 +951,43 @@
             ctx.fill();
             ctx.closePath();
           }
-          ctx.font = "16px 'Press Start 2P'";
-          ctx.fillStyle = "#fff";
+          
+          ctx.shadowBlur = 0;
+          
+          // Name with shadow
+          ctx.font = "12px 'Press Start 2P'";
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.textAlign = "center";
+          ctx.fillText(enemy.name, enemy.x - camera.x + 1, enemy.y - camera.y - enemy.radius - 8);
+          ctx.fillStyle = "#ff6666";
           ctx.fillText(enemy.name, enemy.x - camera.x, enemy.y - camera.y - enemy.radius - 10);
+        }
+        
+        // Draw food.
+        for (let food of foods) {
+          if (!food.eaten) {
+            // Draw shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.ellipse(food.x - camera.x, food.y - camera.y + food.radius + 2, food.radius * 0.6, food.radius * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add sparkle glow
+            ctx.shadowColor = '#ffeb3b';
+            ctx.shadowBlur = 6;
+            
+            if (foodSprite.complete) {
+              ctx.drawImage(foodSprite, food.x - camera.x - food.radius, food.y - camera.y - food.radius, food.radius * 2, food.radius * 2);
+            } else {
+              ctx.beginPath();
+              ctx.arc(food.x - camera.x, food.y - camera.y, food.radius, 0, Math.PI * 2);
+              ctx.fillStyle = food.color;
+              ctx.fill();
+              ctx.closePath();
+            }
+            
+            ctx.shadowBlur = 0;
+          }
         }
         drawMinimap();
         updateLeaderboardUI();
